@@ -8,11 +8,11 @@ class ChatBubble extends StatelessWidget {
   final VoidCallback? onImageTap;
 
   const ChatBubble({
-    Key? key,
+    super.key,
     required this.message,
     required this.isMe,
-    this.onImageTap,
-  }) : super(key: key);
+    required this.onImageTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +122,6 @@ class ChatBubble extends StatelessWidget {
         break;
 
       case MessageType.text:
-      default:
         messageBubble = Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -136,6 +135,7 @@ class ChatBubble extends StatelessWidget {
             ),
           ),
         );
+        break;
     }
 
     return Align(

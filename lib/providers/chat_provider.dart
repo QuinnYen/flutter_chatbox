@@ -3,12 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chatbox/models/chat_room.dart';
 import 'package:flutter_chatbox/models/message.dart';
 import 'package:flutter_chatbox/services/chat_service.dart';
-import 'package:flutter_chatbox/services/chat_security_service.dart';
-import 'package:flutter_chatbox/utils/message_encryption.dart';
 
 class ChatProvider extends ChangeNotifier {
   final ChatService _chatService = ChatService();
-  final ChatSecurityService _securityService = ChatSecurityService();
 
   String? _currentRoomId;
   List<Message> _messages = [];

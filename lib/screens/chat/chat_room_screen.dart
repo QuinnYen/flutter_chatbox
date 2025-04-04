@@ -7,7 +7,6 @@ import 'package:flutter_chatbox/services/chat_service.dart';
 import 'package:flutter_chatbox/widgets/chat_bubble.dart';
 import 'package:flutter_chatbox/widgets/date_separator.dart';
 import 'package:flutter_chatbox/widgets/message_input.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class ChatRoomScreen extends StatefulWidget {
@@ -15,21 +14,19 @@ class ChatRoomScreen extends StatefulWidget {
   final String roomName;
 
   const ChatRoomScreen({
-    Key? key,
+    super.key,
     required this.roomId,
     required this.roomName,
-  }) : super(key: key);
+  });
 
   @override
-  _ChatRoomScreenState createState() => _ChatRoomScreenState();
+  State<ChatRoomScreen> createState() => _ChatRoomScreenState();
 }
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ChatService _chatService = ChatService();
-
-  bool _isSending = false;
 
   @override
   void initState() {
@@ -214,7 +211,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Future<void> _showChatInfo(BuildContext context) async {
     final participants = await _chatService.getChatRoomParticipants(widget.roomId);
 
-    if (!mounted) return;
+    if (!context.mounted) return;
 
     showModalBottomSheet(
       context: context,

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chatbox/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
@@ -37,6 +37,9 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text,
         );
 
+        // 檢查組件是否仍然掛載
+        if (!mounted) return;
+
         // 登入成功，導航到聊天列表頁面
         Navigator.pushReplacementNamed(context, '/chat-list');
       } catch (error) {
@@ -66,6 +69,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       await _authService.resetPassword(_emailController.text.trim());
+
+      // 檢查組件是否仍然掛載
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('密碼重設郵件已發送，請檢查您的收件匣'))
       );
@@ -147,12 +154,12 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _isLoading ? null : _login,
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('登入'),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(50),
                 ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('登入'),
               ),
               const SizedBox(height: 16),
               TextButton(

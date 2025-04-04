@@ -62,7 +62,7 @@ class ChatSecurityService {
     // 遮蔽信用卡號碼
     text = text.replaceAllMapped(
       RegExp(r'\b(?:\d[ -]*?){13,16}\b'),
-          (match) => '************' + match.group(0)!.substring(match.group(0)!.length - 4),
+          (match) => '************${match.group(0)!.substring(match.group(0)!.length - 4)}'
     );
 
     // 遮蔽電子郵件
@@ -72,7 +72,7 @@ class ChatSecurityService {
         final parts = match.group(0)!.split('@');
         if (parts.length == 2) {
           final name = parts[0];
-          return name.substring(0, name.length > 2 ? 2 : 1) + '***@' + parts[1];
+          return '${name.substring(0, name.length > 2 ? 2 : 1)}***@${parts[1]}';
         }
         return '***@***.***';
       },

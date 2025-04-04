@@ -5,7 +5,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_chatbox/models/chat_room.dart';
 import 'package:flutter_chatbox/models/message.dart';
 import 'package:flutter_chatbox/models/chat_user.dart';
-import 'package:flutter_chatbox/models/participant.dart';
 import 'package:flutter_chatbox/services/chat_security_service.dart';
 import 'package:uuid/uuid.dart';
 
@@ -14,6 +13,50 @@ class ChatService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final ChatSecurityService _securityService = ChatSecurityService();
+
+  // 取得聊天室參與者資訊
+  Future<List<ChatUser>> getChatRoomParticipants(String roomId) async {
+    try {
+      // 取得聊天室資料
+      final roomDoc = await _firestore.collection('chatRooms').doc(roomId).get();
+      if (!roomDoc.exists) return [];
+
+      final participantIds = List<String>.from(roomDoc.data()?['participantIds'] ?? []);
+      final List<ChatUser> participants = [];
+
+      // 取得每個參與者的資料
+      for (final userId in participantIds) {
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          participants.add(ChatUser(
+            id: userDoc.id,
+            name: userDoc.data()?['name'] ?? '',
+            email: userDoc.data()?['email'] ?? '',
+            photoUrl: userDoc.data()?['photoUrl'] ?? '',
+            lastActive: (userDoc.data()?['lastActive'] as Timestamp?)?.toDate(),
+          ));
+        }
+      }
+
+      return participants;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 取得聊天室資訊
+  Stream<ChatRoom?> getChatRoom(String roomId) {
+    return _firestore
+        .collection('chatRooms')
+        .doc(roomId)
+        .snapshots()
+        .map((doc) {
+      if (doc.exists) {
+        return ChatRoom.fromFirestore(doc);
+      }
+      return null;
+    });
+  }
 
   // 取得目前使用者的ID
   String? get currentUserId => _auth.currentUser?.uid;
@@ -139,6 +182,96 @@ class ChatService {
         'hasBeenProcessed': text != processedText,
       },
     );
+  }
+  // ===============================================================
+  // 根據使用者ID取得聊天使用者資料
+  Future<ChatUser?> getChatUserById(String uid) async {
+    final userDoc = await _firestore.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      return ChatUser(
+        id: userDoc.id,
+        name: userDoc.data()?['name'] ?? '',
+        email: userDoc.data()?['email'] ?? '',
+        photoUrl: userDoc.data()?['photoUrl'] ?? '',
+        lastActive: (userDoc.data()?['lastActive'] as Timestamp?)?.toDate(),
+      );
+    }
+    return null;
+  }
+
+  // 建立或取得聊天室
+  Future<String> createChatRoom({
+    required String name,
+    String description = '',
+    required List<String> participantIds,
+    bool isGroupChat = false,
+  }) async {
+    if (currentUserId == null) throw Exception('未登入');
+
+    // 檢查是否已存在相同參與者的一對一聊天室
+    if (!isGroupChat && participantIds.length == 2) {
+      final existingRoomQuery = await _firestore
+          .collection('chatRooms')
+          .where('participantIds', isEqualTo: participantIds)
+          .where('isGroupChat', isEqualTo: false)
+          .get();
+
+      if (existingRoomQuery.docs.isNotEmpty) {
+        return existingRoomQuery.docs.first.id;
+      }
+    }
+
+    // 建立新聊天室
+    final roomRef = _firestore.collection('chatRooms').doc();
+    final now = DateTime.now();
+
+    await roomRef.set({
+      'name': name,
+      'description': description,
+      'createdBy': currentUserId,
+      'createdAt': Timestamp.fromDate(now),
+      'updatedAt': Timestamp.fromDate(now),
+      'lastMessage': '',
+      'lastMessageTime': Timestamp.fromDate(now),
+      'isGroupChat': isGroupChat,
+      'participantIds': participantIds,
+    });
+
+    return roomRef.id;
+  }
+
+  // 標記訊息為已讀
+  void _markMessagesAsRead(String roomId, List<Message> messages) async {
+    if (currentUserId == null) return;
+
+    final batch = _firestore.batch();
+    bool hasUpdates = false;
+
+    for (final message in messages) {
+      // 略過自己發送的訊息和已讀的訊息
+      if (message.senderId == currentUserId || message.readBy.contains(currentUserId)) {
+        continue;
+      }
+
+      // 取得訊息文件參考
+      final messageRef = _firestore
+          .collection('messages')
+          .doc(roomId)
+          .collection('chatMessages')
+          .doc(message.id);
+
+      // 將當前使用者ID添加到已讀清單
+      batch.update(messageRef, {
+        'readBy': FieldValue.arrayUnion([currentUserId]),
+        'status': 'read',
+      });
+
+      hasUpdates = true;
+    }
+
+    if (hasUpdates) {
+      await batch.commit();
+    }
   }
 
   // 發送圖片訊息 (整合安全處理)
@@ -268,6 +401,24 @@ class ChatService {
         'timestamp': now.toIso8601String(),
       },
     );
+  }
+
+  // 取得使用者的所有聊天室
+  Stream<List<ChatRoom>> getUserChatRooms() {
+    if (currentUserId == null) {
+      return Stream.value([]);
+    }
+
+    return _firestore
+        .collection('chatRooms')
+        .where('participantIds', arrayContains: currentUserId)
+        .orderBy('updatedAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => ChatRoom.fromFirestore(doc))
+          .toList();
+    });
   }
 
   // 取得聊天室訊息 (整合安全驗證)

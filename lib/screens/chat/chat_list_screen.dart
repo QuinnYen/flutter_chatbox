@@ -8,10 +8,10 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class ChatListScreen extends StatefulWidget {
-  const ChatListScreen({Key? key}) : super(key: key);
+  const ChatListScreen({super.key});
 
   @override
-  _ChatListScreenState createState() => _ChatListScreenState();
+  State<ChatListScreen> createState() => _ChatListScreenState();
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
@@ -35,8 +35,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
+              // 儲存導航路徑
+              final navigateTo = '/';
               await authProvider.signOut();
-              Navigator.pushReplacementNamed(context, '/');
+              // 檢查當前頁面是否還存在於導航樹中
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, navigateTo);
+              }
             },
           ),
         ],
@@ -134,7 +139,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       if (otherUserId.isNotEmpty) {
         // 非同步獲取對方的名稱，使用 FutureBuilder
         return FutureBuilder<ChatUser?>(
-          future: _userService.getUserById(otherUserId),
+          future: _chatService.getChatUserById(otherUserId),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return ListTile(
@@ -268,9 +273,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
                         try {
                           final results = await _userService.searchUsers(value.trim());
-                          // 過濾掉目前使用者
+                          // 過濾掉目前使用者並轉換類型
                           searchResults = results
-                              .where((user) => user.id != currentUserId)
+                              .where((user) => user.uid != currentUserId)
+                              .map((user) => ChatUser(
+                            id: user.uid,
+                            name: user.name,
+                            email: user.email,
+                            photoUrl: user.photoUrl,
+                            lastActive: user.lastActive,
+                          ))
                               .toList();
                         } finally {
                           setState(() {
@@ -312,15 +324,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 isGroupChat: false,
                               );
 
-                              // 導航到聊天室頁面
-                              Navigator.pushNamed(
-                                context,
-                                '/chat-room',
-                                arguments: {
-                                  'roomId': roomId,
-                                  'roomName': user.name,
-                                },
-                              );
+                              // 添加此檢查
+                              if (context.mounted) {
+                                // 導航到聊天室頁面
+                                Navigator.pushNamed(
+                                  context,
+                                  '/chat-room',
+                                  arguments: {
+                                    'roomId': roomId,
+                                    'roomName': user.name,
+                                  },
+                                );
+                              }
                             },
                           );
                         },
@@ -347,9 +362,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
                       try {
                         final results = await _userService.searchUsers(value);
-                        // 過濾掉目前使用者
+                        // 過濾掉目前使用者並轉換類型
                         searchResults = results
-                            .where((user) => user.id != currentUserId)
+                            .where((user) => user.uid != currentUserId)
+                            .map((user) => ChatUser(
+                          id: user.uid,
+                          name: user.name,
+                          email: user.email,
+                          photoUrl: user.photoUrl,
+                          lastActive: user.lastActive,
+                        ))
                             .toList();
                       } finally {
                         setState(() {

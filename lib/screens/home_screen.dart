@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +27,10 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.pushNamed(context, '/login');
               },
-              child: const Text('立即登入'),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(200, 50),
               ),
+              child: const Text('立即登入'),
             ),
             const SizedBox(height: 16),
             TextButton(
