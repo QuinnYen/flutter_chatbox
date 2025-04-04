@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "565931259220",
+    "project_id": "fluttersecuritydemo",
+    "storage_bucket": "fluttersecuritydemo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565931259220:android:be092a96ab3e42d0ab44c1",
+        "android_client_info": {
+          "package_name": "com.example.flutter_chatbox"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2e3-sZ5om9zemhJTzg20f7SsitIsAPlI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
