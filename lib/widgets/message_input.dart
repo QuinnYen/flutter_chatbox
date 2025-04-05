@@ -9,15 +9,15 @@ class MessageInput extends StatefulWidget {
   final Function(File imageFile) onSendImage;
 
   const MessageInput({
-    Key? key,
+    super.key,
     required this.controller,
     required this.isLoading,
     required this.onSendText,
     required this.onSendImage,
-  }) : super(key: key);
+  });
 
   @override
-  _MessageInputState createState() => _MessageInputState();
+  State<MessageInput> createState() => _MessageInputState();
 }
 
 class _MessageInputState extends State<MessageInput> {
@@ -64,7 +64,7 @@ class _MessageInputState extends State<MessageInput> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withAlpha(51),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, -1),

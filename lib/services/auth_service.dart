@@ -17,49 +17,43 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    UserCredential? userCredential;
     try {
       // 創建新使用者
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       // 在 Firestore 中儲存使用者資料
       if (userCredential.user != null) {
-        await _firestore.collection('users').doc(userCredential.user!.uid).set({
-          'uid': userCredential.user!.uid,
-          'name': name,
-          'email': email,
-          'photoUrl': '',
-          'createdAt': FieldValue.serverTimestamp(),
-          'lastActive': FieldValue.serverTimestamp(),
-        });
+        try {
+          await _firestore.collection('users').doc(userCredential.user!.uid).set({
+            'uid': userCredential.user!.uid,
+            'name': name,
+            'email': email,
+            'photoUrl': '',
+            'createdAt': FieldValue.serverTimestamp(),
+            'lastActive': FieldValue.serverTimestamp(),
+          });
 
-        // 更新使用者顯示名稱
-        await userCredential.user!.updateDisplayName(name);
+          // 更新使用者顯示名稱
+          await userCredential.user!.updateDisplayName(name);
+        } catch (firestoreError) {
+          // 若寫入 Firestore 失敗，記錄但繼續流程
+          print('Firestore 寫入錯誤: $firestoreError');
+          // 不拋出異常，讓用戶仍能登入
+        }
       }
 
       return userCredential;
-    } on FirebaseAuthException catch (e) {
-      // 處理常見的註冊錯誤
-      String errorMessage;
-      switch (e.code) {
-        case 'email-already-in-use':
-          errorMessage = '此電子郵件已被使用';
-          break;
-        case 'weak-password':
-          errorMessage = '密碼強度不足';
-          break;
-        case 'invalid-email':
-          errorMessage = '無效的電子郵件格式';
-          break;
-        default:
-          errorMessage = '註冊時發生錯誤：${e.message}';
-      }
-
-      throw errorMessage;
     } catch (e) {
-      throw '註冊時發生未知錯誤：$e';
+      // 如果創建了用戶但後續步驟失敗，嘗試登入而非報錯
+      if (userCredential?.user != null) {
+        print('註冊部分成功，嘗試直接登入');
+        return userCredential!;
+      }
+      throw '註冊時發生錯誤：$e';
     }
   }
 

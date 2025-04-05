@@ -7,6 +7,7 @@ import 'package:flutter_chatbox/services/chat_service.dart';
 import 'package:flutter_chatbox/widgets/chat_bubble.dart';
 import 'package:flutter_chatbox/widgets/date_separator.dart';
 import 'package:flutter_chatbox/widgets/message_input.dart';
+import 'package:flutter_chatbox/models/chat_room.dart';
 import 'package:provider/provider.dart';
 
 class ChatRoomScreen extends StatefulWidget {
@@ -236,13 +237,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     children: [
                       CircleAvatar(
                         backgroundColor: Colors.teal,
-                        child: Icon(
-                          _chatService.getChatRoom(widget.roomId).first.then(
-                                  (room) => room?.isGroupChat ?? false
-                          ) == true
-                              ? Icons.group
-                              : Icons.person,
-                          color: Colors.white,
+                        child: FutureBuilder<ChatRoom?>(
+                          future: _chatService.getChatRoom(widget.roomId).first,
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData && snapshot.data != null) {
+                              final isGroupChat = snapshot.data!.isGroupChat;
+                              return Icon(
+                                isGroupChat ? Icons.group : Icons.person,
+                                color: Colors.white,
+                              );
+                            }
+                            // 預設顯示
+                            return const Icon(Icons.person, color: Colors.white);
+                          },
                         ),
                       ),
                       const SizedBox(width: 16),

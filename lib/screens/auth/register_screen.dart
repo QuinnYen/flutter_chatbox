@@ -42,18 +42,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           password: _passwordController.text,
         );
 
-        // 檢查組件是否仍然掛載
+        // 註冊成功，導航到聊天列表頁面
         if (!mounted) return;
 
-        // 註冊成功，導航到聊天列表頁面
-        Navigator.pushReplacementNamed(context, '/chat-list');
+        // 使用更強力的導航方法
+        Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/chat-list',
+                (route) => false
+        );
       } catch (error) {
         setState(() {
           _errorMessage = error.toString();
-        });
-      } finally {
-        setState(() {
-          _isLoading = false;
         });
       }
     }

@@ -78,7 +78,7 @@ class UserService {
     // 實作簡單的使用者搜尋功能，根據名稱或電子郵件
     QuerySnapshot snapshot = await _firestore.collection('users')
         .where('name', isGreaterThanOrEqualTo: keyword)
-        .where('name', isLessThanOrEqualTo: keyword + '\uf8ff')
+        .where('name', isLessThanOrEqualTo: '$keyword\uf8ff')
         .get();
 
     List<UserModel> users = snapshot.docs
@@ -88,7 +88,7 @@ class UserService {
     // 根據電子郵件搜尋
     QuerySnapshot emailSnapshot = await _firestore.collection('users')
         .where('email', isGreaterThanOrEqualTo: keyword)
-        .where('email', isLessThanOrEqualTo: keyword + '\uf8ff')
+        .where('email', isLessThanOrEqualTo: '$keyword\uf8ff')
         .get();
 
     // 合併結果並去除重複
